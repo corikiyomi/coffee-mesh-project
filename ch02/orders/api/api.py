@@ -5,7 +5,7 @@ from starlette.responses import Response
 from starlette import status
 
 from orders.app import app
-
+from orders.api.schemas import CreateOrderSchema # We import the pydantic models so we can use them for validation
 
 # Define an order object to return in our responses
 order = {
@@ -28,6 +28,8 @@ def get_orders():
 
 # Specify that the response's status code is 201 (Created)
 @app.post('/orders', status_code=status.HTTP_201_CREATED) 
+def create_order(order_details: CreateOrderSchema):
+    return order
 
 # Define URL parameters, such as order_id, within curly brackets
 @app.get('/orders/{order_id}')
@@ -35,7 +37,7 @@ def get_order(order_id: UUID):  # Capture the URL parameter as a function argume
     return order
 
 @app.put('/orders/{order_id}')
-def update_order(order_id: UUID):
+def update_order(order_id: UUID, order_details: CreateOrderSchema):
     return order
 
 # Use HTTPStatus.NO_CONTENT.value to return an empty response

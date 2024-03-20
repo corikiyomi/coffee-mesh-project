@@ -1,6 +1,7 @@
 from enum import Enum
-from typing import List
+from typing import List, Optional
 from uuid import UUID
+from datetime import datetime
 
 from pydantic import BaseModel, Field, conlist, conint
 
@@ -22,7 +23,7 @@ class OrderItemSchema(BaseModel):   # Every pydantic model inherits from pydanti
     quantity: Optional[conint(ge=1, strict=True)] = 1   # We specify quantity's minimum value and we give it a default
 
 class CreateOrderSchema(BaseModel):
-    order: conlist(OrderItemSchema, min_items=1)    # We use pydantic's conlist type to define a list with at least one element
+    order: conlist(OrderItemSchema, min_length=1)    # We use pydantic's conlist type to define a list with at least one element
 
 class GetOrderSchema(CreateOrderSchema):
     id: UUID
