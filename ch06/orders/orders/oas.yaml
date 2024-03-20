@@ -14,13 +14,13 @@ servers:
     description: staging server for testing purposes only
 
 paths:
-  /orders:    #   We declare a URL path
-    get:  #   HTTP method supported by the /orders URL path
-      parameters:   #   We describe URL query parameters under the parameters property
-      - name: cancelled   #   The parameter's name
-        in: query   #     We us the descriptor to specify that the parameter goes in the URL path
-        required: false   #    We specify whether the parameter is required
-        schema:     #     We specify the parameter's type under schema
+  /orders:
+    get:
+      parameters:
+      - name: cancelled
+        in: query
+        required: false
+        schema:
           type: boolean
       - name: limit
         in: query

@@ -2,7 +2,8 @@ import time
 import uuid
 
 from datetime import datetime
-from uuid import UUID  # universally unique identifier
+from uuid import UUID
+from typing import Optional
 
 from fastapi import HTTPException
 from starlette.responses import Response
@@ -10,55 +11,70 @@ from starlette import status
 
 from orders.app import app
 from orders.api.schemas import (
-    CreateOrderSchema, # We import the pydantic models so we can use them for validation
+    CreateOrderSchema,
     GetOrderSchema,
     GetOrdersSchema
 )
 
 ORDERS =[]  # We represent our in-memory list of orders as a Python list
 
-
 # Define an order object to return in our responses
-# order = {
-#     'id': 'ff0f1355-e821-4178-9567-550dec27a373',
-#     'status': 'delivered',
-#     'created': datetime.utcnow(),
-#     'updated': datetime.utcnow(),
-#     'order': [
-#         {
-#             'product': 'cappuccino',
-#             'size': 'medium',
-#             'quantity': 1
-#         }
-#     ]
-# }
+order = {
+    'id': 'ff0f1355-e821-4178-9567-550dec27a373',
+    'status': 'delivered',
+    'created': datetime.utcnow(),
+    'updated': datetime.utcnow(),
+    'order': [
+        {
+            'product': 'cappuccino',
+            'size': 'medium',
+            'quantity': 1
+        }
+    ]
+}
 
-# Register a GET endpoint for the /orders URL path
-@app.get('/orders', response_model=GetOrdersSchema) # decorators @
-def get_orders():
-    return ORDERS #  To return the list of orders, we simply return the ORDERS list
+@app.get('/orders', response_model=GetOrdersSchema)
+def get_orders(cancelled: Optional[bool] = None, limit: Optional[int] = None): # We include URL query parameters in the function signature
+    if cancelled is None and limit is None: # If the parameters haven't been set, we return immediately
+        return {'orders': ORDERS}
+    
+    query_set = [order for order in ORDERS] # If any of the parameters has been set, we filter list into a query_set
 
-# Specify that the response's status code is 201 (Created)
+    if cancelled is not None:   # We check whether cancelled is set
+        if cancelled:
+            query_set = [
+                order for order in query_set
+                if order['status'] == 'cancelled'
+            ]
+        else:
+            query_set = [
+                order for order in query_set
+                if order['status'] != 'cancelled'
+            ]
+    if limit is not None and len(query_set) > limit: #  If limit is set and its value is lower than the length of query_set, we return a subset of query_set
+        return {'orders': query_set[:limit]}
+    
+    return {'orders': query_set}
+
 @app.post(
     '/orders', 
     status_code=status.HTTP_201_CREATED,
     response_model=GetOrderSchema,
 ) 
 def create_order(order_details: CreateOrderSchema):
-    order = order_details.dict()    # We transform every order into a dictionary
-    order['id'] = uuid.uuid4 #      We enrich the order object with server-side attributes, such as the id
+    order = order_details.dict()
+    order['id'] = uuid.uuid4
     order['created'] = datetime.utcnow()
     order['status'] = 'created'
-    ORDERS.append(order)    #   To create the order, we add it to the list
-    return order #    After appending the order to the list, we return it
+    ORDERS.append(order)
+    return order
 
-# Define URL parameters, such as order_id, within curly brackets
 @app.get('/orders/{order_id}', response_model=GetOrderSchema)
-def get_order(order_id: UUID):  # Capture the URL parameter as a function argument
-    for order in ORDERS: #      To find an order by ID, we iterate the ORDERS list and check their IDs
+def get_order(order_id: UUID):
+    for order in ORDERS:
         if order['id'] == order_id:
             return order
-        raise HTTPException( #  If an order isn't found, we raise an HTTPException with status_code set to 404 to return a 404 response
+        raise HTTPException(
             status_code=404, detail=f'Order with ID {order_id} not found'
         )
 
@@ -66,13 +82,12 @@ def get_order(order_id: UUID):  # Capture the URL parameter as a function argume
 def update_order(order_id: UUID, order_details: CreateOrderSchema):
     return order
 
-# Use HTTPStatus.NO_CONTENT.value to return an empty response
 @app.delete(
     '/orders/{order_id}', 
     status_code=status.HTTP_204_NO_CONTENT
 )
 def delete_order(order_id: UUID):
-    for index, order in enumerate(ORDERS): #    We order from the list using the list.pop() method
+    for index, order in enumerate(ORDERS):
         if order['id'] == order_id:
             ORDERS.pop(index)
             return Response(status_code=HTTPStatus.NO_CONTENT.value)
