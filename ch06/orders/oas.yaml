@@ -1,0 +1,286 @@
+openapi: 3.0.3
+
+info:
+  title: Orders API
+  description: API that allows you to manage orders for CoffeeMesh
+  version: 1.0.0
+
+servers:
+  - url: http://localhost:8000
+    description: local development server
+  - url: https://coffeemesh.com
+    description: main production server
+  - url: https://coffeemesh-staging.com
+    description: staging server for testing purposes only
+
+paths:
+  /orders:    #   We declare a URL path
+    get:  #   HTTP method supported by the /orders URL path
+      parameters:   #   We describe URL query parameters under the parameters property
+      - name: cancelled   #   The parameter's name
+        in: query   #     We us the descriptor to specify that the parameter goes in the URL path
+        required: false   #    We specify whether the parameter is required
+        schema:     #     We specify the parameter's type under schema
+          type: boolean
+      - name: limit
+        in: query
+        required: false
+        schema:
+          type: integer
+      summary: Returns a list of orders
+      operationId: getOrders    #  We add an operation ID to each endpoint so that 
+      description: >            #  we can reference them in other sections of the document
+        A list of orders made by the customer
+        sorted by date. Allows to filter orders
+        by range of dates.
+      responses:
+        '200':
+          description: A JSON array of orders
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  orders:
+                    type: array   #   orders is an array
+                    items:
+                      $ref: '#/components/schemas/GetOrderSchema'   #   Each item in the array is defined by GetOrderSchema
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+
+    post:
+      summary: Creates an order
+      operationId: createOrder
+      requestBody:    #   We describe the request payloads under requestBody
+        required: true    #   We specify whether the payload is required
+        content:    #   We specify the payload's content type
+          application/json:   #   We define the payload's schema
+            schema:
+              $ref: '#/components/schemas/CreateOrderSchema'
+      responses:
+        '201':
+          description: A JSON representation of the created order
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetOrderSchema'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+
+  /orders/{order_id}:   #   We declare the order's resource URL
+    parameters:   #   We define the URL path parameter
+      - in: path    #   The order_id parameter is part of the URL path
+        name: order_id    #   The name of the parameter
+        required: true    #   The order_id parameter is required
+        schema:
+          type: string
+          format: uuid    #   We specify the parameter's format (UUID)
+    get:    #   We define the GET endpoint of the /orders/{order_id} URL path
+      summary: Returns the details of a specific order    #   We provide a summary description of this endpoint
+      operationId: getOrder
+      responses:    #   We define this endpoint's responses
+        '200':    #   Each response is an object where the key is the status code
+          description: OK   #   A brief description of the response
+          content:    #   We describe the content types of the response
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetOrderSchema'   #   We use a JSON pointer to reference GetOrderSchema
+        '404':    #   We define a 404 response
+          $ref: '#/components/responses/NotFound'   #   We reference the NotFound response using a JSON pointer
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+
+    put:    #   We define the HTTP method PUT for the current URL path
+      summary: Replaces an existing order
+      operationId: updateOrder
+      requestBody:    #   We document the request body of the PUT endpoint
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateOrderSchema'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref:  '#/components/schemas/GetOrderSchema'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+
+    delete:
+      summary: Deletes an existing order
+      operationId: deleteOrder
+      responses:
+        '204':
+          description: The resource was deleted successfully
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+
+  /orders/{order_id}/pay:
+    parameters:
+      - in: path
+        name: order_id
+        required: true
+        schema:
+          type: string
+          format: uuid
+    post:
+      summary: Processes payment for an order
+      operationId: payOrder
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetOrderSchema'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+
+
+  /orders/{order_id}/cancel:
+    parameters:
+      - in: path
+        name: order_id
+        required: true
+        schema:
+          type: string
+          format: uuid
+    post:
+      summary: Cancels an order
+      operationId: cancelOrder
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetOrderSchema'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+
+components:   #   The components section is used to declare schemas that are references across the specification
+  responses:  #   Generic responses go under responses in the components section
+    NotFound: #   We name the response
+      description: The specified resource was not found.    #   We describe the response
+      content:    #   We define the response's content
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'    #   We reference the Error schema
+    UnprocessableEntity:
+      description: The payload contains invalid values.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
+  securitySchemes:    #   The security schemes under the securitySchemes header of the API's components section
+    openId:   #   We provide a name for the security scheme (it can be any name)
+      type: openIdConnect   #   The type of security scheme
+      openIdConnectUrl: https://coffeemesh-dev.eu.auth0.com/.well-known/openid-configuration  #   The URL that describes the OpenID Connect config in the backend
+    oauth2:   #   The name of another security scheme
+      type: oauth2  #  The type of the security scheme
+      flows:    #   The authorization flows available under this security scheme
+        clientCredentials:    #   A description of the client credentials flow
+          tokenUrl: https://coffeemesh-dev.eu.auth0.com/oauth/token   #    The URL where users can request authorization tokens
+          scopes: {}    #   The available scopes when requesting an authorization token
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT   #   The bearer token has a JSON Web Token (JWT) format
+
+  schemas:    #   Schema definitions go under components 
+    Error:    #   We define the schema for the Error payload
+      type: object
+      properties:
+        detail:
+          oneOf:
+            - type: string
+            - type: array
+      required:
+        - detail
+
+    OrderItemSchema:    #   Every schema is an object; key is the name, values are the properties
+      type: object    # Every schema has a type, which in this case is an object
+      required:   # We list compulsory properties under the required keyword
+        - product
+        - size
+      properties:   # We list object properties under the properties keyword
+        product:
+          type: string
+        size:
+          type: string
+          enum:   # We constrain the values of a property using an enumeration
+            - small
+            - medium
+            - big
+        quantity:
+          type: integer
+          format: int64
+          default: 1    # Attributes can have a default value
+          minimum: 1    # We can also specify a minimum values for a property
+          maximum: 1000000
+
+    CreateOrderSchema:
+      type: object
+      required:
+        - order
+      properties:
+        order:
+          type: array
+          minItems: 1
+          items:    # We specify the type of the items in the array using the items keyword
+            $ref: '#/components/schemas/OrderItemSchema'    # We use a JSON pointer to reference another schema within the same document
+
+    GetOrderSchema:   #   We define the GetOrderSchema schema ()
+      allOf:  #   We use the allOf keyword to inherit properties from other schemas
+        $ref: '#/components/schemas/CreateOrderSchema'  #   We use a JSON pointer to reference another schema
+          - type: object    #   We define a new object to include properties that are specific to GetOrderSchema
+            required:
+              - id
+              - created
+              - status
+            properties:
+              id:
+                type: string
+                format: uuid
+              status:
+                type: string
+                enum:
+                  - created
+                  - paid
+                  - progress
+                  - cancelled
+                  - dispatched
+                  - delivered
+              created:
+                type: string
+                format: date-time
+
+security:
+  - oauth2:
+      - getOrders
+      - createOrder
+      - getOrder
+      - updateOrder
+      - deleteOrder
+      - payOrder
+      - cancelOrder
+  - bearerAuth:
+      - getOrders
+      - createOrder
+      - getOrder
+      - updateOrder
+      - deleteOrder
+      - payOrder
+      - cancelOrder
