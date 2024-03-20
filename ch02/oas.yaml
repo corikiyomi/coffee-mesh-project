@@ -209,24 +209,24 @@ components:
         - detail
 
     OrderItemSchema:
-      type: object
-      required:
+      type: object    # Every schema has a type, which in this case is an object
+      required:   # We list compulsory properties under the required keyword
         - product
         - size
-      properties:
+      properties:   # We list object properties under the properties keyword
         product:
           type: string
         size:
           type: string
-          enum:
+          enum:   # We constrain the values of a property using an enumeration
             - small
             - medium
             - big
         quantity:
           type: integer
           format: int64
-          default: 1
-          minimum: 1
+          default: 1    # Attributes can have a default value
+          minimum: 1    # We can also specify a minimum values for a property
           maximum: 1000000
 
     CreateOrderSchema:
@@ -237,8 +237,8 @@ components:
         order:
           type: array
           minItems: 1
-          items:
-            $ref: '#/components/schemas/OrderItemSchema'
+          items:    # We specify the type of the items in the array using the items keyword
+            $ref: '#/components/schemas/OrderItemSchema'    # We use a JSON pointer to reference another schema within the same document
 
     GetOrderSchema:
       type: object
