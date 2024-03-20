@@ -42,9 +42,9 @@ paths:
                 type: object
                 properties:
                   orders:
-                    type: array
+                    type: array   #   orders is an array
                     items:
-                      $ref: '#/components/schemas/GetOrderSchema'
+                      $ref: '#/components/schemas/GetOrderSchema'   #   Each item in the array is defined by GetOrderSchema
         '422':
           $ref: '#/components/responses/UnprocessableEntity'
 
@@ -75,18 +75,18 @@ paths:
         schema:
           type: string
           format: uuid    #   We specify the parameter's format (UUID)
-    get:
-      summary: Returns the details of a specific order
+    get:    #   We define the GET endpoint of the /orders/{order_id} URL path
+      summary: Returns the details of a specific order    #   We provide a summary description of this endpoint
       operationId: getOrder
-      responses:
-        '200':
-          description: OK
-          content:
+      responses:    #   We define this endpoint's responses
+        '200':    #   Each response is an object where the key is the status code
+          description: OK   #   A brief description of the response
+          content:    #   We describe the content types of the response
             application/json:
               schema:
-                $ref: '#/components/schemas/GetOrderSchema'
-        '404':
-          $ref: '#/components/responses/NotFound'
+                $ref: '#/components/schemas/GetOrderSchema'   #   We use a JSON pointer to reference GetOrderSchema
+        '404':    #   We define a 404 response
+          $ref: '#/components/responses/NotFound'   #   We reference the NotFound response using a JSON pointer
         '422':
           $ref: '#/components/responses/UnprocessableEntity'
 
@@ -170,13 +170,13 @@ paths:
           $ref: '#/components/responses/UnprocessableEntity'
 
 components:   #   The components section is used to declare schemas that are references across the specification
-  responses:
-    NotFound:
-      description: The specified resource was not found.
-      content:
+  responses:  #   Generic responses go under responses in the components section
+    NotFound: #   We name the response
+      description: The specified resource was not found.    #   We describe the response
+      content:    #   We define the response's content
         application/json:
           schema:
-            $ref: '#/components/schemas/Error'
+            $ref: '#/components/schemas/Error'    #   We reference the Error schema
     UnprocessableEntity:
       description: The payload contains invalid values.
       content:
@@ -184,23 +184,23 @@ components:   #   The components section is used to declare schemas that are ref
           schema:
             $ref: '#/components/schemas/Error'
 
-  securitySchemes:
-    openId:
-      type: openIdConnect
-      openIdConnectUrl: https://coffeemesh-dev.eu.auth0.com/.well-known/openid-configuration
-    oauth2:
-      type: oauth2
-      flows:
-        clientCredentials:
-          tokenUrl: https://coffeemesh-dev.eu.auth0.com/oauth/token
-          scopes: {}
+  securitySchemes:    #   The security schemes under the securitySchemes header of the API's components section
+    openId:   #   We provide a name for the security scheme (it can be any name)
+      type: openIdConnect   #   The type of security scheme
+      openIdConnectUrl: https://coffeemesh-dev.eu.auth0.com/.well-known/openid-configuration  #   The URL that describes the OpenID Connect config in the backend
+    oauth2:   #   The name of another security scheme
+      type: oauth2  #  The type of the security scheme
+      flows:    #   The authorization flows available under this security scheme
+        clientCredentials:    #   A description of the client credentials flow
+          tokenUrl: https://coffeemesh-dev.eu.auth0.com/oauth/token   #    The URL where users can request authorization tokens
+          scopes: {}    #   The available scopes when requesting an authorization token
     bearerAuth:
       type: http
       scheme: bearer
-      bearerFormat: JWT
+      bearerFormat: JWT   #   The bearer token has a JSON Web Token (JWT) format
 
   schemas:    #   Schema definitions go under components 
-    Error:
+    Error:    #   We define the schema for the Error payload
       type: object
       properties:
         detail:
