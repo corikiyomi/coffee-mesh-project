@@ -53,3 +53,17 @@ def cancel_order(order_id: UUID):
 def pay_order(order_id: UUID):
     return order
 
+{
+    'detail': [
+        {
+            'loc': [
+                'body',
+                'order',
+                0,
+                'product'
+            ],
+            'msg': 'field required',
+            'type': 'value_error.missing'
+        }
+    ]
+}
